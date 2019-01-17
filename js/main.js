@@ -11,10 +11,10 @@ jQuery(function($) {
 			lon = position.coords.longitude;
 
 		// Functie de convertire a unei date de tip UNIX in zi a saptamanii
-		var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		var daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 		function time(timestamp) {
 			var a = new Date(timestamp);
-			return days[a.getDay()];
+			return daysOfWeek[a.getDay()];
 		}
 
 		// Functie de trecere a unui string la litere mari
@@ -31,7 +31,8 @@ jQuery(function($) {
 			url: 'http://secure.geonames.org/countrySubdivision?lat=' + lat + '&lng=' + lon + '&username=cristeaioan',
 			dataType: 'xml',
 			success: function (xml) {
-				console.log('http://secure.geonames.org/countrySubdivision?lat=' + lat + '&lng=' + lon + '&username=cristeaioan');
+
+				console.log('Raspuns API geolocatie: http://secure.geonames.org/countrySubdivision?lat=' + lat + '&lng=' + lon + '&username=cristeaioan');
 
 				// Setam unitatea de masura specifica tarii (metric/imperial)
 				var impCountryCodes = ['BS', 'BZ', 'KY', 'PW', 'US'],
@@ -61,7 +62,8 @@ jQuery(function($) {
 					url: 'https://api.openweathermap.org/data/2.5/weather?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58',
 					dataType: 'xml',
 					success: function (xml) {
-						console.log('https://api.openweathermap.org/data/2.5/weather?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58');
+
+						console.log('Raspuns API vreme actuala: https://api.openweathermap.org/data/2.5/weather?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58');
 
 						$('.curr-wthr .container').css('background-image', 'url("images/bgs/' + $(xml).find('weather').attr('icon') + '.jpg")');
 
@@ -72,19 +74,25 @@ jQuery(function($) {
 						$('.curr-wthr-state .icon img').attr('src', 'images/icons2/' + $(xml).find('weather').attr('icon') + '.svg');
 						$('.curr-wthr-state .description').html(upper($(xml).find('weather').attr('value')));
 					}
+
 				});
 
 
-				var days = [],
-					inArray;
-
+				// Facem un apel catre API-ul de la OpenWeatherMap pentru a obtine
+				// informatii legate de prognoza pe urmatoarele zile cu ajutorul
+				// latitudinii si a longitudinii
+				// Precizam unitatea de masura
 				$.ajax({
 					type: 'GET',
 					url: 'https://api.openweathermap.org/data/2.5/forecast?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58',
 					dataType: 'xml',
 					success: function (xml) {
-						console.log('https://api.openweathermap.org/data/2.5/forecast?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58');
 
+						console.log('Raspuns API prognoza: https://api.openweathermap.org/data/2.5/forecast?lat=' + lat +'&lon=' + lon + '&mode=xml&units=' + units + '&appid=fcb6592fbcf59c296c70c45a0ed72a58');
+
+						var days = [],
+							inArray,
+							temp = 0;
 						$(xml).find('time').each(function () {
 							var $this = $(this);
 							inArray = false;
@@ -92,13 +100,24 @@ jQuery(function($) {
 							for( i = 0; i < days.length; i++ ) {
 								if( days[i].day === time($this.attr('from')) ) {
 									inArray = true;
+
+									days[i].temp.push($this.find('temperature').attr('value'));
 								}
 							}
 
 							if( inArray === false ) {
-								days.push( { day: time($this.attr('from')), 'temp': $this.find('temperature').attr('value'), icon: $this.find('symbol').attr('var')} );
+								days.push( { day: time($this.attr('from')), 'temp': [$this.find('temperature').attr('value')], icon: $this.find('symbol').attr('var')} );
 							}
 						});
+
+						for( i = 0; i < days.length; i++ ) {
+							for( j = 0; j < days[i].temp.length; j++ ) {
+								temp += parseInt(days[i].temp[j]);
+							}
+							days[i].temp = temp / days[i].temp.length;
+
+							temp = 0;
+						}
 
 						$('.daily .day').each(function(day) {
 
@@ -111,7 +130,6 @@ jQuery(function($) {
 
 						});
 
-						console.log(days);
 					}
 				});
 
