@@ -28,7 +28,7 @@ jQuery(function($) {
 		// cu ajutorul latitudinii si longitudinii
 		$.ajax({
 			type: 'GET',
-			url: 'http://secure.geonames.org/countrySubdivision?lat=' + lat + '&lng=' + lon + '&username=cristeaioan',
+			url: 'https://secure.geonames.org/countrySubdivision?lat=' + lat + '&lng=' + lon + '&username=cristeaioan',
 			dataType: 'xml',
 			success: function (xml) {
 
